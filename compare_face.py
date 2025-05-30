@@ -1,6 +1,6 @@
 # Python 3.11+
-import os
-os.system('pip install dlib --no-cache-dir')
+# import os
+# os.system('pip install dlib --no-cache-dir')
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, HttpUrl
