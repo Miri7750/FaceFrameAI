@@ -2,7 +2,7 @@ FROM python:3.9-slim
 
 # התקנת תלויות
 RUN apt-get update && apt-get install -y \
-    build-essential \  # הוסף את build-essential כדי להתקין g++
+    build-essential \
     libgl1-mesa-glx \
     cmake \
     libboost-all-dev \
