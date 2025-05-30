@@ -10,4 +10,4 @@ COPY . /app
 WORKDIR /app
 
 # הפעלת השרת
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "compare_face:app", "--host", "0.0.0.0", "--port", "8000"]
