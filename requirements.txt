@@ -1,0 +1,8 @@
+dlib
+fastapi
+uvicorn
+numpy
+opencv-python
+face_recognition
+requests
+pydantic
