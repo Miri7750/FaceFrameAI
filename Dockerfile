@@ -1,7 +1,38 @@
-# Use Python 3.11 slim as the base image
+## ========================= Stage 1: Builder =========================
+FROM python:3.11-slim AS builder
+
+# 1. מגדירים את MAKEFLAGS כך ש-CMake ו-make יריצו קומפילציה בליבה אחת בלבד
+#    (בכך מורידים משמעותית את צריכת הזיכרון בעת בניית dlib)
+ENV MAKEFLAGS="-j1"
+
+# 2. מתקינים כלי פיתוח ו-CMake הדרושים לבניית dlib ו-face-recognition-models
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      cmake \
+      pkg-config \
+      python3-dev \
+      libglib2.0-0 \
+      libsm6 \
+      libxrender1 \
+      libxext6 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# 3. מעתיקים את קובץ ה־requirements החוצה
+COPY requirements.txt .
+
+# 4. יוצרים גלגלים (wheels) לכל התלויות כולל dlib ו־face-recognition-models,
+#    בצורה אוטונומית בתוך התיקייה /wheels
+RUN pip install --upgrade pip && \
+    pip wheel --no-cache-dir -r requirements.txt -w /wheels
+
+
+# ========================= Stage 2: Runtime =========================
 FROM python:3.11-slim
 
-# 1. התקנת ספריות ריצה מינימליות עבור OpenCV ו־dlib (מבלי לקמפל שום דבר)
+# 5. מתקינים רק את הספריות הדרושות בזמן ריצה (ללא כל כלי הפיתוח)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       libglib2.0-0 \
@@ -12,20 +43,15 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# 2. מעתיקים קובץ דרישות (אפשר להכין אותו במקביל לדוקר ישׂ)
+# 6. מעתיקים את כל הגלגלים משלב ה-builder ומתקינים אותם ללא בנייה חוזרת
+COPY --from=builder /wheels /wheels
 COPY requirements.txt .
 
-# 3. משדרגים pip ומתקינים את כל החבילות מתוך requirements.txt
-#    שימו לב: גרסת dlib 19.22.1 מגיעה כ־manylinux wheel עבור Python 3.11,
-#    ולכן לא תצטרכו לבנות אותה מ־source (וזה יחסוך זיכרון בזמן ה-build).
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# 7. מתקינים את כל התלויות מתוך גלגלים בלבד (ללא גישה לרשת)
+RUN pip install --no-index --find-links /wheels -r requirements.txt
 
-# 4. מעתיקים את קוד היישום לתוך התמונה
+# 8. מעתיקים את קוד היישום
 COPY . .
 
-# 5. פותחים את הפורט שה־FastAPI רץ עליו
-EXPOSE 8000
-
-# 6. פקודת הפעלה
+# 9. מגדירים את פקודת ההפעלה
 CMD ["uvicorn", "compare_face:app", "--host", "0.0.0.0", "--port", "8000"]
