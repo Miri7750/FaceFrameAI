@@ -1,8 +1,13 @@
-dlib==19.22.0
+dlib==19.22.1
+face-recognition
 fastapi
-uvicorn
+uvicorn[standard]
 numpy
 opencv-python
-face_recognition
 requests
-pydantic
+
+
+
+
+
+

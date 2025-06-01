@@ -1,44 +1,7 @@
-# ----------------------------------------
-# Stage 1: Build environment – מתקינים את dlib מ-wheel נכון
-# ----------------------------------------
-FROM python:3.11-slim AS builder
-
-# 1. התקנת התלויות הדרושות להרכבת ספריות פייתון כבדות (ללא boost מלא)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      build-essential \
-      cmake \
-      pkg-config \
-      python3-dev \
-      libglib2.0-0 \
-      libsm6 \
-      libxrender1 \
-      libxext6 \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# 2. מעלים pip לגרסה עדכנית
-RUN pip install --upgrade pip
-
-# 3. מתקינים dlib מ-wheel עבור Python 3.11 (גרסה שיש לה תמיכה ב-manylinux)
-RUN pip install --no-cache-dir dlib==19.24.1
-
-# 4. מתקינים face_recognition (ללא תלות ב-dlib), ושאר חבילות ה-Python
-RUN pip install --no-cache-dir \
-      face-recognition --no-deps \
-      fastapi \
-      "uvicorn[standard]" \
-      numpy \
-      opencv-python \
-      requests
-
-# ----------------------------------------
-# Stage 2: Runtime מינימלי
-# ----------------------------------------
+# Use Python 3.11 slim as the base image
 FROM python:3.11-slim
 
-# 5. התקנת ספריות ריצה של OpenCV בלבד
+# 1. התקנת ספריות ריצה מינימליות עבור OpenCV ו־dlib (מבלי לקמפל שום דבר)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       libglib2.0-0 \
@@ -49,15 +12,20 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# 6. מעתיקים את חבילות ה-Python שהותקנו בשלב ה-builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# 2. מעתיקים קובץ דרישות (אפשר להכין אותו במקביל לדוקר ישׂ)
+COPY requirements.txt .
 
-# 7. מעתיקים את קוד המקור שלכם
+# 3. משדרגים pip ומתקינים את כל החבילות מתוך requirements.txt
+#    שימו לב: גרסת dlib 19.22.1 מגיעה כ־manylinux wheel עבור Python 3.11,
+#    ולכן לא תצטרכו לבנות אותה מ־source (וזה יחסוך זיכרון בזמן ה-build).
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# 4. מעתיקים את קוד היישום לתוך התמונה
 COPY . .
 
-# 8. פותחים פורט 8000
+# 5. פותחים את הפורט שה־FastAPI רץ עליו
 EXPOSE 8000
 
-# 9. פקודת ההפעלה
+# 6. פקודת הפעלה
 CMD ["uvicorn", "compare_face:app", "--host", "0.0.0.0", "--port", "8000"]
