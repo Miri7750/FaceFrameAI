@@ -16,7 +16,7 @@ RUN apt-get update && \
       libxrender1 \
       libxext6 \
     && rm -rf /var/lib/apt/lists/*
-=======
+
 # התקנת תלויות
 RUN apt-get update && apt-get install -y \
     build-essential \
