@@ -1,4 +1,5 @@
 
+<<<<<<< HEAD
 # ----------------------------------------
 # Stage 1: Build environment (ממנו מורידים ומתקינים את כל התלויות הכבדות)
 # ----------------------------------------
@@ -16,6 +17,15 @@ RUN apt-get update && \
       libxrender1 \
       libxext6 \
     && rm -rf /var/lib/apt/lists/*
+=======
+# התקנת תלויות
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libgl1-mesa-glx \
+    cmake \
+    libboost-all-dev \
+    && pip install --no-cache-dir numpy opencv-python face-recognition requests
+>>>>>>> origin/main
 
 WORKDIR /app
 
