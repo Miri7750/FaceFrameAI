@@ -26,7 +26,7 @@ COPY requirements.txt .
 # 4. יוצרים גלגלים (wheels) לכל התלויות כולל dlib ו־face-recognition-models,
 #    בצורה אוטונומית בתוך התיקייה /wheels
 RUN pip install --upgrade pip && \
-    pip wheel --no-cache-dir -r requirements.txt -w /wheels
+    pip wheel --no-cache-dir --use-pep517 -r requirements.txt -w /wheels
 
 
 # ========================= Stage 2: Runtime =========================
